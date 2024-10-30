@@ -149,6 +149,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Función para manejar clics en el mapa y mostrar popup con GetFeatureInfo
     map.on('click', function(e) {
         var wmsUrl = 'https://geoserver.scrd.gov.co/geoserver/Investigacion_Cultured_Maps/wms';
+        var excludedLayer = 'Investigacion_Cultured_Maps:Localidad_Storymap_RolMujer'; // Nombre de la capa a excluir
+    
+        // Generar URL de GetFeatureInfo para todas las capas activas excepto la capa excluida
+        var queryLayers = wmsLayers
+            .filter(layer => layer.layerName !== excludedLayer)
+            .map(layer => layer.layerName)
+            .join(',');
+    
+        if (!queryLayers) return; // Si no hay capas para consultar, salir de la función
+    
         var url = wmsUrl + L.Util.getParamString({
             request: 'GetFeatureInfo',
             service: 'WMS',
@@ -160,13 +170,13 @@ document.addEventListener('DOMContentLoaded', function() {
             bbox: map.getBounds().toBBoxString(),
             height: map.getSize().y,
             width: map.getSize().x,
-            layers: wmsLayers.map(layer => layer.layerName).join(','),
-            query_layers: wmsLayers.map(layer => layer.layerName).join(','),
+            layers: queryLayers,
+            query_layers: queryLayers,
             info_format: 'application/json',
             x: Math.floor(e.containerPoint.x),
             y: Math.floor(e.containerPoint.y)
         });
-
+    
         fetch(url)
             .then(response => response.json())
             .then(data => {
